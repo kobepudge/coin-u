@@ -92,7 +92,7 @@
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-2xl font-bold text-gray-900">即时收购</h3>
             <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
-              {{ buyers.length }} 家收购商
+              {{ buyers?.length || 0 }} 家收购商
             </span>
           </div>
 
@@ -357,7 +357,7 @@ const loadMerchants = async () => {
 
     // 获取当前出货商家
     const sellerResponse = await getCurrentSeller()
-    // 修复：API返回的data直接是商家对象或null，不是包装在merchant属性中
+    // 注意：getCurrentSeller返回的data是商家对象，不是包装的
     currentSeller.value = sellerResponse.data
 
     // 获取收购商家列表
