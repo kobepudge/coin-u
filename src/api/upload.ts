@@ -5,8 +5,8 @@ import type { ApiResponse, UploadResponse } from '@/types'
 export const uploadPaymentQr = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  
-  return api.post<ApiResponse<UploadResponse>>('/api/upload/payment-qr', formData, {
+
+  return api.post<ApiResponse<UploadResponse>>('/upload/payment-qr', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
