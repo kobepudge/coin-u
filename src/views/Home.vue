@@ -265,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { NModal, NAlert, NInput, NUpload, NButton, useMessage } from 'naive-ui'
 import type { Merchant } from '@/types'
 import { getPublicMerchants, getCurrentSeller } from '@/api/merchant'
@@ -354,23 +354,49 @@ const submitSellOrder = async () => {
 const loadMerchants = async () => {
   try {
     loading.value = true
+    console.log('🔄 开始加载商家数据...')
 
     // 获取当前出货商家
+    console.log('📡 请求当前出货商家...')
     const sellerResponse = await getCurrentSeller()
+    console.log('📦 出货商家响应:', sellerResponse)
+    console.log('📦 出货商家数据:', sellerResponse.data)
+
     // 注意：getCurrentSeller返回的data是商家对象，不是包装的
     currentSeller.value = sellerResponse.data
+    console.log('✅ currentSeller 已更新:', currentSeller.value)
 
     // 获取收购商家列表
+    console.log('📡 请求收购商家列表...')
     const buyersResponse = await getPublicMerchants('buyer')
-    // 修复：API返回的data直接是数组
-    buyers.value = buyersResponse.data || []
+    console.log('📦 收购商家完整响应:', buyersResponse)
+    console.log('📦 收购商家数据:', buyersResponse.data)
+    console.log('🔍 数据类型检查:')
+    console.log('  - typeof buyersResponse.data:', typeof buyersResponse.data)
+    console.log('  - Array.isArray(buyersResponse.data):', Array.isArray(buyersResponse.data))
+    console.log('  - buyersResponse.data.length:', buyersResponse.data?.length)
+
+    // 强制确保数据是数组
+    const buyersData = Array.isArray(buyersResponse.data) ? buyersResponse.data : []
+    console.log('🔧 强制处理后的数据:', buyersData)
+    console.log('🔧 强制处理后长度:', buyersData.length)
+
+    // 使用 nextTick 确保响应式更新
+    buyers.value = buyersData
+    await nextTick()
+
+    console.log('✅ 最终 buyers.value:', buyers.value)
+    console.log('✅ 最终 buyers 类型:', typeof buyers.value)
+    console.log('✅ 最终 buyers 是数组:', Array.isArray(buyers.value))
+    console.log('✅ 最终 buyers 长度:', buyers.value?.length)
 
   } catch (error: any) {
-    console.error('加载商家数据错误:', error)
+    console.error('❌ 加载商家数据错误:', error)
     const errorMessage = error?.response?.data?.message || '加载商家信息失败'
     message.error(errorMessage)
   } finally {
     loading.value = false
+    console.log('🏁 数据加载完成')
   }
 }
 
