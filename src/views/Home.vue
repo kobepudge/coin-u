@@ -165,8 +165,16 @@
 
         <!-- 收款二维码 -->
         <div class="text-center">
-          <div class="bg-gray-200 w-48 h-48 mx-auto rounded-lg flex items-center justify-center mb-4">
-            <span class="text-gray-500">收款二维码</span>
+          <div v-if="currentSeller.payment_qr" class="w-48 h-48 mx-auto rounded-lg border mb-4 overflow-hidden">
+            <img
+              :src="getFirstPaymentQr(currentSeller.payment_qr)"
+              alt="收款二维码"
+              class="w-full h-full object-contain"
+              @error="handleQrError"
+            />
+          </div>
+          <div v-else class="bg-gray-200 w-48 h-48 mx-auto rounded-lg flex items-center justify-center mb-4">
+            <span class="text-gray-500">暂无收款二维码</span>
           </div>
         </div>
 
@@ -296,6 +304,18 @@ const openSellModal = (buyer: Merchant) => {
     paymentQr: []
   }
   showSellModal.value = true
+}
+
+// 获取第一个支付二维码URL（用于显示）
+const getFirstPaymentQr = (paymentQr: string) => {
+  if (!paymentQr) return ''
+  const qrUrls = paymentQr.split(',').filter(url => url.trim())
+  return qrUrls.length > 0 ? qrUrls[0].trim() : ''
+}
+
+// 处理二维码加载错误
+const handleQrError = () => {
+  message.error('收款二维码加载失败')
 }
 
 // 提交出售订单

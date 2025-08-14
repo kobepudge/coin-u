@@ -15,7 +15,7 @@ export interface Merchant {
   speed: string
   guarantee: string
   transfer_game_id?: string
-  payment_qr_url?: string
+  payment_qr?: string // 收款二维码URL，支持多个用逗号分隔
   status: 'active' | 'inactive'
   created_at: Timestamp
   updated_at: Timestamp
