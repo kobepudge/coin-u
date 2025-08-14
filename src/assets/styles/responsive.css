@@ -1,0 +1,84 @@
+/* 响应式设计样式 */
+
+/* 移动端优先设计 */
+@media (max-width: 640px) {
+  /* 容器调整 */
+  .container {
+    @apply px-3;
+  }
+  
+  /* 文字大小调整 */
+  h1 {
+    @apply text-xl;
+  }
+  
+  h2 {
+    @apply text-lg;
+  }
+  
+  h3 {
+    @apply text-base;
+  }
+  
+  /* 卡片间距调整 */
+  .card {
+    @apply mx-2 p-4;
+  }
+  
+  /* 按钮调整 */
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline {
+    @apply w-full py-4 text-base;
+  }
+  
+  /* 表格响应式 */
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+  
+  /* 网格布局调整 */
+  .grid-responsive {
+    @apply grid-cols-1;
+  }
+}
+
+/* 平板设备 */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-responsive {
+    @apply grid-cols-2;
+  }
+}
+
+/* 桌面设备 */
+@media (min-width: 1025px) {
+  .grid-responsive {
+    @apply grid-cols-3;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大可点击区域 */
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline {
+    @apply min-h-[48px];
+  }
+  
+  /* 移除hover效果 */
+  .card-hover:hover {
+    @apply transform-none shadow-soft;
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* 确保图标和图片清晰 */
+  .icon,
+  .logo {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
