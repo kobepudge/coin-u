@@ -362,8 +362,8 @@ const loadMerchants = async () => {
     console.log('📦 出货商家响应:', sellerResponse)
     console.log('📦 出货商家数据:', sellerResponse.data)
 
-    // 注意：getCurrentSeller返回的data是商家对象，不是包装的
-    currentSeller.value = sellerResponse.data
+    // 修复：axios返回的是完整响应，需要访问 .data.data
+    currentSeller.value = sellerResponse.data.data
     console.log('✅ currentSeller 已更新:', currentSeller.value)
 
     // 获取收购商家列表
@@ -376,8 +376,8 @@ const loadMerchants = async () => {
     console.log('  - Array.isArray(buyersResponse.data):', Array.isArray(buyersResponse.data))
     console.log('  - buyersResponse.data.length:', buyersResponse.data?.length)
 
-    // 强制确保数据是数组
-    const buyersData = Array.isArray(buyersResponse.data) ? buyersResponse.data : []
+    // 修复：访问正确的数据路径 buyersResponse.data.data
+    const buyersData = Array.isArray(buyersResponse.data.data) ? buyersResponse.data.data : []
     console.log('🔧 强制处理后的数据:', buyersData)
     console.log('🔧 强制处理后长度:', buyersData.length)
 
