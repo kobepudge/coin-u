@@ -357,13 +357,16 @@ const loadMerchants = async () => {
 
     // 获取当前出货商家
     const sellerResponse = await getCurrentSeller()
-    currentSeller.value = sellerResponse.data.merchant
+    // 修复：API返回的data直接是商家对象或null，不是包装在merchant属性中
+    currentSeller.value = sellerResponse.data
 
     // 获取收购商家列表
     const buyersResponse = await getPublicMerchants('buyer')
-    buyers.value = buyersResponse.data.merchants
+    // 修复：API返回的data直接是数组
+    buyers.value = buyersResponse.data || []
 
   } catch (error: any) {
+    console.error('加载商家数据错误:', error)
     const errorMessage = error?.response?.data?.message || '加载商家信息失败'
     message.error(errorMessage)
   } finally {
