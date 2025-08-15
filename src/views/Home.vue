@@ -358,7 +358,7 @@ const submitSellOrder = async () => {
     let paymentQrUrl = ''
     if (sellForm.value.paymentQr.length > 0) {
       const uploadResponse = await uploadPaymentQr(sellForm.value.paymentQr[0].file)
-      paymentQrUrl = uploadResponse.data.url
+      paymentQrUrl = uploadResponse.data.data.url
     }
 
     // 验证上传结果
