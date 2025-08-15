@@ -237,6 +237,8 @@
               :max="1"
               accept="image/*"
               list-type="image-card"
+              :custom-request="handleUploadRequest"
+              @change="handleUploadChange"
             >
               <n-button>点击上传</n-button>
             </n-upload>
@@ -325,6 +327,22 @@ const submitSellOrder = async () => {
   try {
     submitting.value = true
 
+    // 前端验证
+    if (!sellForm.value.playerGameId || sellForm.value.playerGameId.trim() === '') {
+      message.error('请输入玩家游戏ID')
+      return
+    }
+
+    if (sellForm.value.playerGameId.length > 100) {
+      message.error('玩家游戏ID长度不能超过100字符')
+      return
+    }
+
+    if (sellForm.value.paymentQr.length === 0) {
+      message.error('请上传收款二维码')
+      return
+    }
+
     // 上传支付二维码图片
     let paymentQrUrl = ''
     if (sellForm.value.paymentQr.length > 0) {
@@ -332,10 +350,22 @@ const submitSellOrder = async () => {
       paymentQrUrl = uploadResponse.data.url
     }
 
+    // 验证上传结果
+    if (!paymentQrUrl) {
+      message.error('收款二维码上传失败，请重试')
+      return
+    }
+
+    console.log('提交订单数据:', {
+      merchant_id: selectedBuyer.value.id,
+      player_game_id: sellForm.value.playerGameId.trim(),
+      payment_qr_url: paymentQrUrl
+    })
+
     // 调用API提交订单
     await createOrder({
       merchant_id: selectedBuyer.value.id,
-      player_game_id: sellForm.value.playerGameId,
+      player_game_id: sellForm.value.playerGameId.trim(),
       payment_qr_url: paymentQrUrl
     })
 
@@ -343,7 +373,20 @@ const submitSellOrder = async () => {
     showSellModal.value = false
 
   } catch (error: any) {
-    const errorMessage = error?.response?.data?.message || '提交失败，请重试'
+    console.error('提交订单失败:', error)
+
+    let errorMessage = '提交失败，请重试'
+
+    if (error?.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error?.response?.status === 500) {
+      errorMessage = '服务器内部错误，请稍后重试'
+    } else if (error?.response?.status === 400) {
+      errorMessage = error?.response?.data?.message || '请求参数错误'
+    } else if (!error?.response) {
+      errorMessage = '网络连接失败，请检查网络设置'
+    }
+
     message.error(errorMessage)
   } finally {
     submitting.value = false
