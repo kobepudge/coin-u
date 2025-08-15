@@ -320,6 +320,17 @@ const handleQrError = () => {
   message.error('收款二维码加载失败')
 }
 
+// 处理自定义上传请求
+const handleUploadRequest = ({ file, onFinish, onError }) => {
+  // 直接完成，因为我们在提交订单时才真正上传到服务器
+  onFinish()
+}
+
+// 处理上传文件变化
+const handleUploadChange = ({ fileList }) => {
+  sellForm.value.paymentQr = fileList
+}
+
 // 提交出售订单
 const submitSellOrder = async () => {
   if (!selectedBuyer.value) return
