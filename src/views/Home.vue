@@ -171,27 +171,39 @@
               <img
                 :src="paymentQrList[currentQrIndex]"
                 alt="收款二维码"
-                class="qr-image w-full h-full object-contain"
+                class="qr-image w-full h-full object-contain cursor-pointer"
                 @error="handleQrError"
+                @click="openQrPreview(paymentQrList[currentQrIndex])"
               />
+            </div>
 
-              <!-- 左右切换按钮 -->
-              <div v-if="paymentQrList.length > 1" class="absolute inset-0 flex items-center justify-between px-2">
-                <button
-                  @click="prevQr"
-                  class="qr-carousel-btn w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center"
-                  :disabled="currentQrIndex === 0"
-                >
-                  ‹
-                </button>
-                <button
-                  @click="nextQr"
-                  class="qr-carousel-btn w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center"
-                  :disabled="currentQrIndex === paymentQrList.length - 1"
-                >
-                  ›
-                </button>
-              </div>
+            <!-- 左右切换按钮 - 移到图片外部 -->
+            <div v-if="paymentQrList.length > 1" class="flex items-center justify-center gap-4 mb-4">
+              <button
+                @click="prevQr"
+                class="qr-carousel-btn w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center border shadow-sm"
+                :disabled="currentQrIndex === 0"
+                :class="{ 'opacity-50 cursor-not-allowed': currentQrIndex === 0 }"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+
+              <span class="text-sm text-gray-500 min-w-[60px]">
+                {{ currentQrIndex + 1 }} / {{ paymentQrList.length }}
+              </span>
+
+              <button
+                @click="nextQr"
+                class="qr-carousel-btn w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full flex items-center justify-center border shadow-sm"
+                :disabled="currentQrIndex === paymentQrList.length - 1"
+                :class="{ 'opacity-50 cursor-not-allowed': currentQrIndex === paymentQrList.length - 1 }"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
             </div>
 
             <!-- 指示器 -->
@@ -200,14 +212,14 @@
                 v-for="(_, index) in paymentQrList"
                 :key="index"
                 @click="currentQrIndex = index"
-                class="qr-indicator w-2 h-2 rounded-full"
-                :class="currentQrIndex === index ? 'bg-blue-500' : 'bg-gray-300'"
+                class="qr-indicator w-2 h-2 rounded-full transition-all duration-200"
+                :class="currentQrIndex === index ? 'bg-blue-500 scale-125' : 'bg-gray-300 hover:bg-gray-400'"
               />
             </div>
 
-            <!-- 二维码计数 -->
-            <div v-if="paymentQrList.length > 1" class="text-xs text-gray-500 mb-2">
-              收款二维码 {{ currentQrIndex + 1 }} / {{ paymentQrList.length }}
+            <!-- 点击提示 -->
+            <div class="text-xs text-gray-500 mb-2">
+              点击二维码可放大查看
             </div>
           </div>
           <div v-else class="bg-gray-200 w-48 h-48 mx-auto rounded-lg flex items-center justify-center mb-4">
@@ -327,6 +339,28 @@
         </div>
       </div>
     </n-modal>
+
+    <!-- 二维码预览弹窗 -->
+    <n-modal
+      v-model:show="showQrPreview"
+      preset="card"
+      title="收款二维码"
+      style="width: 90vw; max-width: 500px;"
+      :mask-closable="true"
+    >
+      <div class="flex flex-col items-center p-4">
+        <img
+          :src="previewQrUrl"
+          alt="收款二维码"
+          class="max-w-full max-h-[70vh] border rounded-lg shadow-sm"
+          @error="message.error('二维码加载失败')"
+        />
+        <div class="mt-4 text-sm text-gray-500 text-center space-y-1">
+          <div>长按图片可保存到相册</div>
+          <div>或截图保存后扫码支付</div>
+        </div>
+      </div>
+    </n-modal>
   </div>
 </template>
 
@@ -348,6 +382,8 @@ const loading = ref(false)
 // 弹窗状态
 const showBuyModal = ref(false)
 const showSellModal = ref(false)
+const showQrPreview = ref(false)
+const previewQrUrl = ref('')
 const selectedBuyer = ref<Merchant | null>(null)
 const submitting = ref(false)
 
@@ -405,6 +441,12 @@ const nextQr = () => {
 // 处理二维码加载错误
 const handleQrError = () => {
   message.error('收款二维码加载失败')
+}
+
+// 打开二维码预览
+const openQrPreview = (url: string) => {
+  previewQrUrl.value = url
+  showQrPreview.value = true
 }
 
 // 处理自定义上传请求
@@ -584,13 +626,18 @@ onMounted(() => {
 }
 
 .qr-carousel-btn:hover:not(:disabled) {
-  transform: scale(1.1);
-  background-color: rgba(0, 0, 0, 0.7);
+  transform: scale(1.05);
+  background-color: #f3f4f6;
 }
 
 .qr-carousel-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.qr-carousel-btn:disabled:hover {
+  transform: none;
+  background-color: #f9fafb;
 }
 
 /* 指示器样式 */
@@ -603,8 +650,20 @@ onMounted(() => {
   transform: scale(1.2);
 }
 
-/* 二维码图片过渡效果 */
+/* 二维码图片样式 */
 .qr-image {
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.qr-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 预览弹窗样式 */
+.qr-preview-modal img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 </style>
