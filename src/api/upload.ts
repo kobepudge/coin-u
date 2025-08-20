@@ -12,3 +12,15 @@ export const uploadPaymentQr = (file: File) => {
     }
   })
 }
+
+// 上传转账截图
+export const uploadTransferScreenshot = (file: File) => {
+  const formData = new FormData()
+  formData.append('screenshot', file)
+
+  return api.post<ApiResponse<UploadResponse>>('/upload/transfer-screenshot', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

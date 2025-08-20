@@ -163,18 +163,63 @@
           <div class="text-2xl font-bold text-primary-600 mb-4">{{ currentSeller.price }}</div>
         </div>
 
-        <!-- 收款二维码 -->
+        <!-- 收款二维码轮播 -->
         <div class="text-center">
-          <div v-if="currentSeller.payment_qr" class="w-48 h-48 mx-auto rounded-lg border mb-4 overflow-hidden">
-            <img
-              :src="getFirstPaymentQr(currentSeller.payment_qr)"
-              alt="收款二维码"
-              class="w-full h-full object-contain"
-              @error="handleQrError"
-            />
+          <div v-if="paymentQrList.length > 0" class="relative">
+            <!-- 二维码显示区域 -->
+            <div class="w-48 h-48 mx-auto rounded-lg border mb-4 overflow-hidden relative">
+              <img
+                :src="paymentQrList[currentQrIndex]"
+                alt="收款二维码"
+                class="qr-image w-full h-full object-contain"
+                @error="handleQrError"
+              />
+
+              <!-- 左右切换按钮 -->
+              <div v-if="paymentQrList.length > 1" class="absolute inset-0 flex items-center justify-between px-2">
+                <button
+                  @click="prevQr"
+                  class="qr-carousel-btn w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center"
+                  :disabled="currentQrIndex === 0"
+                >
+                  ‹
+                </button>
+                <button
+                  @click="nextQr"
+                  class="qr-carousel-btn w-8 h-8 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center"
+                  :disabled="currentQrIndex === paymentQrList.length - 1"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <!-- 指示器 -->
+            <div v-if="paymentQrList.length > 1" class="flex justify-center space-x-2 mb-4">
+              <button
+                v-for="(_, index) in paymentQrList"
+                :key="index"
+                @click="currentQrIndex = index"
+                class="qr-indicator w-2 h-2 rounded-full"
+                :class="currentQrIndex === index ? 'bg-blue-500' : 'bg-gray-300'"
+              />
+            </div>
+
+            <!-- 二维码计数 -->
+            <div v-if="paymentQrList.length > 1" class="text-xs text-gray-500 mb-2">
+              收款二维码 {{ currentQrIndex + 1 }} / {{ paymentQrList.length }}
+            </div>
           </div>
           <div v-else class="bg-gray-200 w-48 h-48 mx-auto rounded-lg flex items-center justify-center mb-4">
             <span class="text-gray-500">暂无收款二维码</span>
+          </div>
+        </div>
+
+        <!-- 支付宝账号 -->
+        <div v-if="currentSeller.alipay_account" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-blue-800">支付宝账号：</span>
+            <span class="text-sm font-mono text-blue-900">{{ currentSeller.alipay_account }}</span>
           </div>
         </div>
 
@@ -243,6 +288,25 @@
               <n-button>点击上传</n-button>
             </n-upload>
           </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              上传转账后截图 <span class="text-red-500">*</span>
+            </label>
+            <n-upload
+              v-model:file-list="sellForm.transferScreenshot"
+              :max="1"
+              accept="image/*"
+              list-type="image-card"
+              :custom-request="handleTransferScreenshotUploadRequest"
+              @change="handleTransferScreenshotUploadChange"
+            >
+              <n-button>点击上传转账截图</n-button>
+            </n-upload>
+            <div class="text-xs text-gray-500 mt-1">
+              请上传您向商家转账后的截图，用于核实转账记录
+            </div>
+          </div>
         </div>
 
         <!-- 重要提示 -->
@@ -256,7 +320,7 @@
             type="primary"
             @click="submitSellOrder"
             :loading="submitting"
-            :disabled="!sellForm.playerGameId || !sellForm.paymentQr.length"
+            :disabled="!sellForm.playerGameId || !sellForm.paymentQr.length || !sellForm.transferScreenshot.length"
           >
             我已转账，提交信息
           </n-button>
@@ -272,7 +336,7 @@ import { NModal, NAlert, NInput, NUpload, NButton, useMessage } from 'naive-ui'
 import type { Merchant } from '@/types'
 import { getPublicMerchants, getCurrentSeller } from '@/api/merchant'
 import { createOrder } from '@/api/order'
-import { uploadPaymentQr } from '@/api/upload'
+import { uploadPaymentQr, uploadTransferScreenshot } from '@/api/upload'
 
 const message = useMessage()
 
@@ -287,14 +351,30 @@ const showSellModal = ref(false)
 const selectedBuyer = ref<Merchant | null>(null)
 const submitting = ref(false)
 
+// 二维码轮播状态
+const currentQrIndex = ref(0)
+const paymentQrList = ref<string[]>([])
+
 // 出售表单
 const sellForm = ref({
   playerGameId: '',
-  paymentQr: [] as any[]
+  paymentQr: [] as any[],
+  transferScreenshot: [] as any[]
 })
 
 // 打开购买弹窗
 const openBuyModal = () => {
+  // 初始化二维码列表
+  if (currentSeller.value?.payment_qr) {
+    paymentQrList.value = currentSeller.value.payment_qr
+      .split(',')
+      .filter(url => url.trim())
+      .map(url => url.trim())
+      .slice(0, 3) // 最多显示3个二维码
+  } else {
+    paymentQrList.value = []
+  }
+  currentQrIndex.value = 0
   showBuyModal.value = true
 }
 
@@ -303,16 +383,23 @@ const openSellModal = (buyer: Merchant) => {
   selectedBuyer.value = buyer
   sellForm.value = {
     playerGameId: '',
-    paymentQr: []
+    paymentQr: [],
+    transferScreenshot: []
   }
   showSellModal.value = true
 }
 
-// 获取第一个支付二维码URL（用于显示）
-const getFirstPaymentQr = (paymentQr: string) => {
-  if (!paymentQr) return ''
-  const qrUrls = paymentQr.split(',').filter(url => url.trim())
-  return qrUrls.length > 0 ? qrUrls[0].trim() : ''
+// 二维码轮播控制
+const prevQr = () => {
+  if (currentQrIndex.value > 0) {
+    currentQrIndex.value--
+  }
+}
+
+const nextQr = () => {
+  if (currentQrIndex.value < paymentQrList.value.length - 1) {
+    currentQrIndex.value++
+  }
 }
 
 // 处理二维码加载错误
@@ -329,6 +416,17 @@ const handleUploadRequest = ({ file, onFinish, onError }) => {
 // 处理上传文件变化
 const handleUploadChange = ({ fileList }) => {
   sellForm.value.paymentQr = fileList
+}
+
+// 处理转账截图自定义上传请求
+const handleTransferScreenshotUploadRequest = ({ file, onFinish, onError }) => {
+  // 直接完成，因为我们在提交订单时才真正上传到服务器
+  onFinish()
+}
+
+// 处理转账截图上传文件变化
+const handleTransferScreenshotUploadChange = ({ fileList }) => {
+  sellForm.value.transferScreenshot = fileList
 }
 
 // 提交出售订单
@@ -354,6 +452,11 @@ const submitSellOrder = async () => {
       return
     }
 
+    if (sellForm.value.transferScreenshot.length === 0) {
+      message.error('请上传转账截图')
+      return
+    }
+
     // 上传支付二维码图片
     let paymentQrUrl = ''
     if (sellForm.value.paymentQr.length > 0) {
@@ -367,17 +470,32 @@ const submitSellOrder = async () => {
       return
     }
 
+    // 上传转账截图
+    let transferScreenshotUrl = ''
+    if (sellForm.value.transferScreenshot.length > 0) {
+      const uploadResponse = await uploadTransferScreenshot(sellForm.value.transferScreenshot[0].file)
+      transferScreenshotUrl = uploadResponse.data.data.url
+    }
+
+    // 验证转账截图上传结果
+    if (!transferScreenshotUrl) {
+      message.error('转账截图上传失败，请重试')
+      return
+    }
+
     console.log('提交订单数据:', {
       merchant_id: selectedBuyer.value.id,
       player_game_id: sellForm.value.playerGameId.trim(),
-      payment_qr_url: paymentQrUrl
+      payment_qr_url: paymentQrUrl,
+      transfer_screenshot_url: transferScreenshotUrl
     })
 
     // 调用API提交订单
     await createOrder({
       merchant_id: selectedBuyer.value.id,
       player_game_id: sellForm.value.playerGameId.trim(),
-      payment_qr_url: paymentQrUrl
+      payment_qr_url: paymentQrUrl,
+      transfer_screenshot_url: transferScreenshotUrl
     })
 
     message.success('提交成功！管理员将在核实游戏内金币到账后，通过您提供的二维码向您付款，请耐心等待。')
@@ -458,3 +576,35 @@ onMounted(() => {
   loadMerchants()
 })
 </script>
+
+<style scoped>
+/* 二维码轮播按钮样式 */
+.qr-carousel-btn {
+  transition: all 0.2s ease;
+}
+
+.qr-carousel-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.qr-carousel-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* 指示器样式 */
+.qr-indicator {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.qr-indicator:hover {
+  transform: scale(1.2);
+}
+
+/* 二维码图片过渡效果 */
+.qr-image {
+  transition: opacity 0.3s ease;
+}
+</style>

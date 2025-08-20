@@ -14,6 +14,7 @@ export interface Merchant {
   stock_or_demand: string
   speed: string
   guarantee: string
+  alipay_account?: string // 支付宝账号
   transfer_game_id?: string
   payment_qr?: string // 收款二维码URL，支持多个用逗号分隔
   status: 'active' | 'inactive'
@@ -27,6 +28,7 @@ export interface Order {
   merchant_id: ID
   player_game_id: string
   payment_qr_url?: string
+  transfer_screenshot_url?: string
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'rejected'
   admin_notes?: string
   created_at: Timestamp
@@ -38,6 +40,7 @@ export interface CreateOrderData {
   merchant_id: ID
   player_game_id: string
   payment_qr_url?: string
+  transfer_screenshot_url?: string
 }
 
 // API响应类型
