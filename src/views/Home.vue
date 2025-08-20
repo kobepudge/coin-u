@@ -230,7 +230,7 @@
         <!-- 支付宝账号 -->
         <div v-if="currentSeller.alipay_account" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-blue-800">支付宝账号：</span>
+            <span class="text-sm font-medium text-blue-800">支付宝收款账号：</span>
             <span class="text-sm font-mono text-blue-900">{{ currentSeller.alipay_account }}</span>
           </div>
         </div>
@@ -303,7 +303,7 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              上传转账后截图 <span class="text-red-500">*</span>
+              上传赠送记录截图 <span class="text-red-500">*</span>
             </label>
             <n-upload
               v-model:file-list="sellForm.transferScreenshot"
