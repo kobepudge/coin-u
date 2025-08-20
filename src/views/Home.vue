@@ -313,10 +313,10 @@
               :custom-request="handleTransferScreenshotUploadRequest"
               @change="handleTransferScreenshotUploadChange"
             >
-              <n-button>点击上传转账截图</n-button>
+              <n-button>点击上传赠送记录截图</n-button>
             </n-upload>
             <div class="text-xs text-gray-500 mt-1">
-              请上传您向商家转账后的截图，用于核实转账记录
+              请上传您赠送记录的截图，用于核实转账记录
             </div>
           </div>
         </div>
@@ -460,13 +460,13 @@ const handleUploadChange = ({ fileList }) => {
   sellForm.value.paymentQr = fileList
 }
 
-// 处理转账截图自定义上传请求
+// 处理赠送记录截图自定义上传请求
 const handleTransferScreenshotUploadRequest = ({ file, onFinish, onError }) => {
   // 直接完成，因为我们在提交订单时才真正上传到服务器
   onFinish()
 }
 
-// 处理转账截图上传文件变化
+// 处理赠送记录截图上传文件变化
 const handleTransferScreenshotUploadChange = ({ fileList }) => {
   sellForm.value.transferScreenshot = fileList
 }
@@ -495,7 +495,7 @@ const submitSellOrder = async () => {
     }
 
     if (sellForm.value.transferScreenshot.length === 0) {
-      message.error('请上传转账截图')
+      message.error('请上传赠送记录截图')
       return
     }
 
@@ -512,16 +512,16 @@ const submitSellOrder = async () => {
       return
     }
 
-    // 上传转账截图
+    // 上传赠送记录截图
     let transferScreenshotUrl = ''
     if (sellForm.value.transferScreenshot.length > 0) {
       const uploadResponse = await uploadTransferScreenshot(sellForm.value.transferScreenshot[0].file)
       transferScreenshotUrl = uploadResponse.data.data.url
     }
 
-    // 验证转账截图上传结果
+    // 验证赠送记录截图上传结果
     if (!transferScreenshotUrl) {
-      message.error('转账截图上传失败，请重试')
+      message.error('赠送记录截图上传失败，请重试')
       return
     }
 
